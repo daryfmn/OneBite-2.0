@@ -1,19 +1,36 @@
 // The ONLY place the app reads food data from.
-// Today it reads the bundled JSON files. Later (real data / backend) only this
-// file needs to change — every screen goes through these functions.
-import dishesJson from './dishes.json'
+// Data now comes from the API. loadData() must finish once (see main.tsx)
+// before the app renders, so every function below can stay synchronous.
 import restaurantsJson from './restaurants.json'
 import type { Dish, Restaurant, LatLng } from './types'
 
-const dishes = dishesJson as Dish[]
-const restaurants = restaurantsJson.restaurants as Restaurant[]
-
+// These are not stored in the database. Copy the real values from the
+// "meta" block at the top of restaurants.json.
 export const DATA_IS_SAMPLE: boolean = restaurantsJson.meta.sample
 export const AREA_NAME: string = restaurantsJson.meta.area
 export const AREA_CENTER: LatLng = restaurantsJson.meta.center
 
-const dishById = new Map(dishes.map((d) => [d.id, d]))
-const restaurantById = new Map(restaurants.map((r) => [r.id, r]))
+let dishes: Dish[] = []
+let restaurants: Restaurant[] = []
+let dishById = new Map<string, Dish>()
+let restaurantById = new Map<string, Restaurant>()
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`${url} returned ${res.status}`)
+  return res.json() as Promise<T>
+}
+
+export async function loadData(): Promise<void> {
+  const [d, r] = await Promise.all([
+    fetchJson<Dish[]>('/api/dishes'),
+    fetchJson<Restaurant[]>('/api/restaurants'),
+  ])
+  dishes = d
+  restaurants = r
+  dishById = new Map(dishes.map((x) => [x.id, x]))
+  restaurantById = new Map(restaurants.map((x) => [x.id, x]))
+}
 
 export function getDishes(): Dish[] {
   return dishes

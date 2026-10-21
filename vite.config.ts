@@ -19,5 +19,11 @@ export default defineConfig({
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     __GIT_SHA__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? gitSha()),
   },
-  server: { port: 5173, strictPort: true },
+    server: {
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      '/api': 'http://localhost:3001',
+    },
+  },
 })
